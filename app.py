@@ -27,7 +27,16 @@ def main():
 
     #####
 
-    if st.button('저장') :
+    st.subheader('몇 년도 이후, 몇 페이지 이상되는 책을 검색하고 싶으십니까?')
+    released_year = st.number_input('년도 입력', min_value = 1800, max_value = 2050)
+    pages = st.number_input('페이지 수 입력', min_value = 10)
+
+    order = 'asc'
+    if st.checkbox('오름차순 / 내림차순') :
+        order = 'desc'
+
+
+    if st.button('조회') :
 
         try :
             # 1. 커넥터로부터 커넥션을 받는다.
@@ -49,17 +58,47 @@ def main():
                 # 3. 우리가 원하는거 실행 가능.
                 #cursor.execute('select database();')
 
-                query = '''insert into cats4 (name, age)
-                    values( %s, %s );'''
+                query = '''select * from books;'''
 
-                record = [ ('냐옹이',1),('나비',3), ('단비',5) ]
-                print(datetime.now())
-                cursor.executemany(query, record)
-                connection.commit()
-                print('{}개 적용됨'.format(cursor.rowcount))
+                cursor.execute(query)
+
                 # 4. 실행 후 커서에서 결과를 빼낸다.
                 # record = cursor.fetchone()
                 # print('Connected to db : ', record)
+
+                results = cursor.fetchall()
+                
+                print(results)
+
+                # for data in results :
+                #     print(data[1], data[4])
+
+                cursor = connection.cursor(dictionary = True)
+                
+                if order == 'asc' :
+                    query = ''' select title, released_year, pages
+                                from books
+                                where released_year > %s and pages > %s
+                                order by released_year asc ; '''
+
+                else :
+                    query = ''' select title, released_year, pages
+                                from books
+                                where released_year > %s and pages > %s
+                                order by released_year desc ; '''
+
+                param = (released_year, pages)
+
+                cursor.execute(query,param)
+                results = cursor.fetchall()
+
+                print(results)
+
+                for data in results :
+                    print(data['title'], data['released_year'])
+                    st.write(data)
+
+
 
         except Error as e :
             print('디비 관련 에러 발생', e)
